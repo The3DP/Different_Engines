@@ -6,6 +6,13 @@ class ChessEngine:
     """A recursive chess engine using minimax algorithm with alpha-beta pruning."""
     
     def __init__(self, max_depth: int = 4):
+        """
+        Initialize the chess engine.
+        
+        Args:
+            max_depth (int): Maximum search depth. Higher values are stronger but slower.
+                           Recommended: 2 (fast), 3 (balanced), 4 (strong), 5+ (very slow)
+        """
         self.max_depth = max_depth
         self.nodes_evaluated = 0
     
@@ -13,6 +20,12 @@ class ChessEngine:
         """
         Find the best move for the current position.
         Uses recursive minimax with alpha-beta pruning.
+        
+        Args:
+            board (chess.Board): Current board state
+            
+        Returns:
+            Optional[chess.Move]: Best move found, or None if no legal moves
         """
         self.nodes_evaluated = 0
         best_move = None
@@ -35,14 +48,14 @@ class ChessEngine:
         Recursive minimax algorithm with alpha-beta pruning.
         
         Args:
-            board: Current chess board state
-            depth: Remaining search depth
-            alpha: Alpha value for pruning
-            beta: Beta value for pruning
-            is_maximizing: True if maximizing player's turn
+            board (chess.Board): Current chess board state
+            depth (int): Remaining search depth
+            alpha (float): Alpha value for pruning
+            beta (float): Beta value for pruning
+            is_maximizing (bool): True if maximizing player's turn (White), False for minimizing (Black)
         
         Returns:
-            Evaluation score of the position
+            float: Evaluation score of the position
         """
         self.nodes_evaluated += 1
         
@@ -61,7 +74,7 @@ class ChessEngine:
                 max_eval = max(max_eval, eval_score)
                 alpha = max(alpha, eval_score)
                 
-                # Alpha-beta pruning
+                # Alpha-beta pruning: cutoff if beta <= alpha
                 if beta <= alpha:
                     break
             
@@ -77,7 +90,7 @@ class ChessEngine:
                 min_eval = min(min_eval, eval_score)
                 beta = min(beta, eval_score)
                 
-                # Alpha-beta pruning
+                # Alpha-beta pruning: cutoff if beta <= alpha
                 if beta <= alpha:
                     break
             
@@ -87,6 +100,17 @@ class ChessEngine:
         """
         Evaluate the current position.
         Returns a score from -infinity (black winning) to +infinity (white winning).
+        
+        Scoring:
+        - Checkmate: ±infinity (game over)
+        - Stalemate/Insufficient Material: 0 (draw)
+        - Otherwise: Material count + piece activity bonus
+        
+        Args:
+            board (chess.Board): Board to evaluate
+            
+        Returns:
+            float: Evaluation score
         """
         # Check terminal states
         if board.is_checkmate():
@@ -95,7 +119,7 @@ class ChessEngine:
         if board.is_stalemate() or board.is_insufficient_material():
             return 0
         
-        # Piece values
+        # Piece values (standard chess piece values)
         piece_values = {
             chess.PAWN: 1,
             chess.KNIGHT: 3,
@@ -118,7 +142,9 @@ class ChessEngine:
                     score -= value
         
         # Bonus for piece activity (simplified)
-        score += len(list(board.legal_moves)) * 0.1 if board.turn else -len(list(board.legal_moves)) * 0.1
+        # Side to move gets bonus for having more legal moves available
+        legal_move_count = len(list(board.legal_moves))
+        score += legal_move_count * 0.1 if board.turn else -legal_move_count * 0.1
         
         return score
 
@@ -127,16 +153,30 @@ class InteractiveChess:
     """Interactive chess game interface."""
     
     def __init__(self, engine_depth: int = 4):
+        """
+        Initialize an interactive chess game.
+        
+        Args:
+            engine_depth (int): Search depth for the chess engine.
+                               Recommended: 2-4 for interactive play
+        """
         self.board = chess.Board()
         self.engine = ChessEngine(max_depth=engine_depth)
     
-    def display_board(self):
-        """Display the current board state."""
+    def display_board(self) -> None:
+        """Display the current board state and FEN notation."""
         print("\n" + str(self.board))
         print(f"\nFEN: {self.board.fen()}")
     
-    def play_game(self):
-        """Main game loop for interactive play."""
+    def play_game(self) -> None:
+        """
+        Main game loop for interactive play.
+        
+        - You play as Black
+        - Engine plays as White
+        - Enter moves in algebraic notation (e.g., e2e4, e7e5)
+        - Type 'quit' to exit
+        """
         print("Welcome to Chess Engine!")
         print("You are playing as Black. Engine plays as White.")
         print("Enter moves in algebraic notation (e.g., e2e4, e7e5)")
